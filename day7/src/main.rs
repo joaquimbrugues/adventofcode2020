@@ -39,8 +39,29 @@ fn run1(input: &str) -> usize {
     found.len()
 }
 
+fn compute_recursive_bags(graph: &HashMap<&str, Vec<(u32, &str)>>, bag: &str) -> u32 {
+    1 + graph.get(bag).unwrap().iter().map(|(num, b)| num * compute_recursive_bags(graph, b)).sum::<u32>()
+}
+
 fn run2(input: &str) -> u32 {
-    0
+    // Idea: Same parsing, and a recursive function to count things
+    let mut graph: HashMap<&str, Vec<(u32, &str)>> = HashMap::new();
+    for line in input.lines() {
+        let (first, second) = line.split_once(" contain ").unwrap();
+        let key = first.strip_suffix(" bags").unwrap();
+        if second == "no other bags." {
+            graph.insert(key, vec![]);
+        } else {
+            let val = second.split(", ").map(|chunk| {
+                let (sn, rest) = chunk.split_once(' ').unwrap();
+                let num = sn.parse().unwrap();
+                let (v, _) = rest.rsplit_once(' ').unwrap();
+                (num, v)
+            }).collect();
+            graph.insert(key, val);
+        }
+    }
+    compute_recursive_bags(&graph, "shiny gold") - 1
 }
 
 fn main() {
@@ -57,7 +78,7 @@ fn main() {
 
     let input = fs::read_to_string(filepath).unwrap();
 
-    let res = run1(&input);
+    let res = run2(&input);
     println!("{res}");
 }
 
@@ -75,16 +96,23 @@ fn input1() {
     assert_eq!(res, 370);
 }
 
-//#[test]
-//fn example2() {
-    //let input = fs::read_to_string("test.txt").unwrap();
-    //let res = run2(&input);
-    //assert_eq!(res,42);
-//}
+#[test]
+fn example21() {
+    let input = fs::read_to_string("test.txt").unwrap();
+    let res = run2(&input);
+    assert_eq!(res, 32);
+}
 
-//#[test]
-//fn input2() {
-    //let input = fs::read_to_string("input.txt").unwrap();
-    //let res = run2(&input);
-    //assert_eq!(res,42);
-//}
+#[test]
+fn example22() {
+    let input = fs::read_to_string("test2.txt").unwrap();
+    let res = run2(&input);
+    assert_eq!(res, 126);
+}
+
+#[test]
+fn input2() {
+    let input = fs::read_to_string("input.txt").unwrap();
+    let res = run2(&input);
+    assert_eq!(res, 29547);
+}
