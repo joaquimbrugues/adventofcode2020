@@ -54,8 +54,27 @@ fn run1(input: &str) -> usize {
     }).count()
 }
 
-fn run2(input: &str) -> u32 {
-    0
+fn run2(input: &str) -> usize {
+    let (rules_str, msgs_str) = input.split_once("\n\n").unwrap();
+    let mut rules: HashMap<usize, Rule> = rules_str.lines().map(|line| {
+        let (id, rule) = line.split_once(": ").unwrap();
+        let id = id.parse().unwrap();
+        let rule = if let Some(s) = rule.strip_prefix('"') {
+            Rule::Term(s.as_bytes()[0])
+        } else {
+            let rec = rule.split('|').map(|s| s.split_whitespace().map(|t| t.parse().unwrap()).collect()).collect();
+            Rule::Rec(rec)
+        };
+        (id, rule)
+    }).collect();
+
+    rules.insert(8, Rule::Rec(vec![vec![42], vec![42, 8]]));
+    rules.insert(11, Rule::Rec(vec![vec![42, 31], vec![42, 11, 31]]));
+    
+    msgs_str.lines().filter(|line| {
+        let matches = match_rule(line.as_bytes(), 0, &0, &rules);
+        matches.into_iter().any(|l| l == line.len())
+    }).count()
 }
 
 fn main() {
@@ -72,7 +91,7 @@ fn main() {
 
     let input = fs::read_to_string(filepath).unwrap();
 
-    let res = run1(&input);
+    let res = run2(&input);
     println!("{res}");
 }
 
@@ -90,16 +109,23 @@ fn input1() {
     assert_eq!(res, 107);
 }
 
-//#[test]
-//fn example2() {
-    //let input = fs::read_to_string("test.txt").unwrap();
-    //let res = run2(&input);
-    //assert_eq!(res,42);
-//}
+#[test]
+fn example2() {
+    let input = fs::read_to_string("test2.txt").unwrap();
+    let res = run1(&input);
+    assert_eq!(res, 3);
+}
 
-//#[test]
-//fn input2() {
-    //let input = fs::read_to_string("input.txt").unwrap();
-    //let res = run2(&input);
-    //assert_eq!(res,42);
-//}
+#[test]
+fn example3() {
+    let input = fs::read_to_string("test2.txt").unwrap();
+    let res = run2(&input);
+    assert_eq!(res, 12);
+}
+
+#[test]
+fn input2() {
+    let input = fs::read_to_string("input.txt").unwrap();
+    let res = run2(&input);
+    assert_eq!(res, 321);
+}
